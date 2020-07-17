@@ -1,10 +1,10 @@
 # Build
-#build/
+build/
 public/
 @dev/
 
 # Secrets
-#bin/
+bin/
 
 # Dependencies
 node_modules/
