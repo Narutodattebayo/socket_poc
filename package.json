@@ -9,7 +9,8 @@
         "dev": "npm run build && NODE_ENV=dev node build/server.js",
         "stag": "npm run build && NODE_ENV=stag node build/server.js",
         "qa": "npm run build && NODE_ENV=qa node build/server.js",
-        "bootstrap": "npm run build && node build/services/bootstraps/index.js"
+        "bootstrap": "npm run build && node build/services/bootstraps/index.js",
+        "jsrun":"NODE_ENV=local node build/server.js"
     },
     "author": "Touheed Alam",
     "license": "ISC",
