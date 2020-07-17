@@ -28,7 +28,6 @@ export class SocketClass {
     static getInstance() {
         this.io.on('connection', (socket: any, userId: any) => {
             if (socket.handshake.query.userId) {
-                console.log('new socket connected', socket.handshake.query.userId, socket.id, userId);
 
                 RedisClass.setSocketId(socket.handshake.query.userId, socket.id)
                 this.updateUserOnlineStatus(socket.handshake.query.userId, true, new Date())
@@ -60,21 +59,15 @@ export class SocketClass {
             console.log("DIRECT MESSAGE EVENT CALLED", data.receiverId)
             let room = ""
             let receiverSocket: any = await RedisClass.getSocketId(data.receiverId)
-            console.log(receiverSocket, "receiverSocket is...............")
             let Ids = [];
             Ids.push(socket.handshake.query.userId)
             Ids.push(data.receiverId)
             Ids.sort((a, b) => { return a.localeCompare(b) })
-            console.log(">>>>>>>>>>>>>>>>IDS.......", Ids[0], "........", Ids[1])
             room += Ids[0] + Ids[1]
-            console.log("????????????room", room)
             chatV1.saveNewMsg({ sender: socket.handshake.query.userId, receiver: data.receiverId, message: data.msg, roomId: room, receivers: [socket.handshake.query.userId, data.receiverId] })
-            console.log("direct msg", data)
             if (receiverSocket) {
-                console.log("??????into if")
                 io.sockets.connected[receiverSocket].join(room);
             }
-            console.log("out of if?????????????", data)
             socket.join(room)
             io.to(room).emit('Direct_msg', { _id: socket.handshake.query.userId, sender: socket.handshake.query.userId, receiver: data.receiverId, name: data.name, msg: data.msg, time: new Date().toISOString() });
         })
@@ -156,12 +149,10 @@ export class SocketClass {
     static async getChatForAUser(socket: any, io: any) {
         socket.on('ourChatMessages', async (data: any) => {
             try {
-                console.log("OUR CHAT MESAGES CALLED")
                 if (!data.page) {
                     data.page = 1;
                     data.limit = 5
                 }
-
                 let room = await this.getRoomId(data, socket)
                 let pipeline: any = await builders.User.Chat.ourChatMessages(socket.handshake.query.userId, room, data.receiverId)
                 let list: any = await chatV1.paginateAggregate(pipeline, { page: data.page, limit: data.limit, getCount: true })
@@ -185,10 +176,8 @@ export class SocketClass {
     static async getAllChattedUsers(socket: any, io: any) {
 
         socket.on('allchattedUsers', async (data: any) => {
-            console.log("?????????????????????all chatted users hit")
             let pipeline: any = await builders.User.Chat.allChattedUsers(socket.handshake.query.userId)
             let list = await chatV1.paginateAggregate(pipeline, { page: data.page, limit: data.limit, getCount: true })
-            console.log(list)
             socket.emit('allchattedUsers', list)
         })
     }
@@ -211,7 +200,6 @@ export class SocketClass {
     static async informStateChange(userId: any, status: any, lastSeen?: any) {
         console.log("INFORM STAET XHANGE CALLED")
         let usersToInform: any = await RedisClass.getIdsToInformStateChange(userId)
-        console.log(usersToInform, "--------------------satate change inform HERE")
         if (usersToInform && usersToInform.length) {
             usersToInform.forEach(async (user: any) => {
                 let socketId: any = await RedisClass.getSocketId(user)
@@ -230,7 +218,6 @@ export class SocketClass {
         let receiver
         socket.on("deleteWholeChat", (data: any) => {
             receiver = data.receiverId
-            console.log("into delete>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
             chatV1.editEntity({ type: "single", receivers: { $all: [Types.ObjectId(socket.handshake.query.userId), Types.ObjectId(data.receiverId)] } }, { $push: { deletedFor: socket.handshake.query.userId } }, { multi: true })
             socket.emit("deleteWholeChat", { success: true, _id: receiver })
         })
@@ -240,13 +227,10 @@ export class SocketClass {
 
     static async UserTyping(socket: any) {
         socket.on("typing", async (data: any) => {
-            console.log("TYPING EVENT HIT........................")
             let receiverSocket: any = await RedisClass.getSocketId(data.receiverId)
             if (receiverSocket) {
                 this.io.to(receiverSocket).emit("typing", { userId: socket.handshake.query.userId })
             }
-
-
         })
     }
 
